@@ -1,22 +1,56 @@
-[![Build Status](https://img.shields.io/travis/material-components/material-components-android/master.svg)](https://travis-ci.org/material-components/material-components-android/)
 [![Chat](https://img.shields.io/discord/259087343246508035.svg)](https://discord.gg/material-components)
 
-# Material Components for Android
+# [MAINTENANCE MODE] Material Components for Android
 
-Material Components for Android (MDC-Android) help developers execute
-[Material Design](https://www.material.io). Developed by a core team of
-engineers and UX designers at Google, these components enable a reliable
-development workflow to build beautiful and functional Android apps.
+At Google I/O 2026, Material Android announced that we're "all-in" on Compose,
+alongside the official
+[Android Compose-first announcement](https://android-developers.googleblog.com/2026/05/android-ui-development-is-compose-first.html),
+marking a new chapter in Android development.
 
-Material Components for Android are based on Android’s Design support library
-(DesignLib) which will continue to be released as part of Android’s SDK.
+**This means that the Views-based Material Components for Android library
+(MDC-Android) is now in maintenance mode.**
 
+There are no more planned feature releases for Views, so all projects using the
+Views library should begin or continue
+[migrating to Compose](https://developer.android.com/develop/ui/compose/migrate/migrate-xml-views-to-jetpack-compose)
+to get the latest Material Design and Android platform updates.
+
+For more information, see the following resources:
+
+- [Android Compose-first Blog Post](https://android-developers.googleblog.com/2026/05/android-ui-development-is-compose-first.html)
+- [Android Compose-first Doc](https://developer.android.com/develop/ui/compose/first)
+- [Material Android is Compose-first Blog Post](https://m3.material.io/blog/material-is-compose-first)
+- [Compose Material 3 Getting Started Guide](https://developer.android.com/develop/ui/compose/designsystems/material3)
+- [Compose Material 3 Releases Page](https://developer.android.com/jetpack/androidx/releases/compose-material3)
+- [Compose Material 3 API Reference Docs](https://developer.android.com/reference/kotlin/androidx/compose/material3/package-summary)
+- [Jetpack Compose Homepage](https://developer.android.com/compose)
+- [Migrate XML Views to Jetpack Compose Guide](https://developer.android.com/develop/ui/compose/migrate/migrate-xml-views-to-jetpack-compose)
+
+## Getting Started
+
+For information on how to get started with Material Components for Android,
+take a look at our [Getting Started](docs/getting-started.md) guide.
+
+## Submitting Bugs or Feature Requests
+
+For usage questions: ask on
+[Stack  Overflow](http://stackoverflow.com/questions/tagged/material-components).
+
+Bugs or feature requests should be submitted at our [GitHub Issues section](https://github.com/material-components/material-components-android/issues).
+
+Note: If your issue or feature request is for Material Jetpack Compose, please
+file it at the [Compose Issue Tracker](https://issuetracker.google.com/issues/new?component=742043&template=1346811)
+instead.
 
 ## Useful Links
 - [All Components](https://github.com/material-components/material-components-android/tree/master/lib/)
+- [Getting Started](docs/getting-started.md)
 - [Contributing](docs/contributing.md)
+- [Using Snapshot Version](docs/using-snapshot-version.md)
+- [Building From Source](docs/building-from-source.md)
+- [Catalog App](docs/catalog-app.md)
 - [Class
-  documentation](https://developer.android.com/reference/android/support/design/widget/package-summary.html)
+  documentation](https://developer.android.com/reference/com/google/android/material/classes)
   (external site)
 - [MDC-Android on Stack
   Overflow](https://www.stackoverflow.com/questions/tagged/material-components+android)
@@ -29,6 +63,5 @@ Material Components for Android are based on Android’s Design support library
 
 ## Documentation
 
-*   [Documentation home](docs/index.md)
 *   [Directory structure](docs/directorystructure.md)
-*   [Components](docs/components.md)
+*   [Components](docs/components/)

@@ -1,53 +1,107 @@
 buildscript {
   repositories {
-    jcenter()
+    google()
+    mavenCentral()
   }
   dependencies {
-    classpath 'com.android.tools.build:gradle:2.3.1'
+    classpath libs.android.gradle.plugin
   }
 }
 
 allprojects {
   repositories {
-    jcenter()
+    google()
+    mavenCentral()
+    mavenLocal()
   }
 }
 
 ext {
-  buildToolsVersion = '25.0.2'
-  compileSdkVersion = 25
-  minSdkVersion = 14
-  targetSdkVersion = 25
-  supportVersion = '25.3.1-SNAPSHOT'
-
-  testRunnerVersion = '0.6-alpha'
-  espressoVersion = '2.3-alpha'
+  compileSdkVersion = 35
+  minSdkVersion = 23
+  targetSdkVersion = 33
 
   // Enforce the use of prebuilt dependencies in all sub-projects. This is
   // required for the doclava dependency.
   usePrebuilts = "true"
 
-  // Disable pre-dexing when gradle called with -PdisablePreDex;
-  preDexLibs = !project.hasProperty('disablePreDex')
-}
+  mavenRepoUrl = (project.hasProperty('mavenRepoUrl')
+    ? project.property('mavenRepoUrl') : '/tmp/myRepo/')
 
-// lint every library
-task(lint) << {
+  // Current version of the library (could be in-development/unreleased).
+  mdcLibraryVersion = '1.14.0'
+  mdcLibraryPackage = "com.google.android.material"
+  mdcLibraryDir = "com/google/android/material"
 }
-
-// TODO: setup docs build and API txt generation
 
 task clean(type: Delete) {
   delete rootProject.buildDir
 }
 
+private def getTransformedProjectPath(projectPath) {
+  def pathComponents = projectPath.tokenize('/')
+  def result = ''
+  def currentPath = ''
+  pathComponents.each { component ->
+    if (currentPath == '') {
+      currentPath += component
+    } else {
+      currentPath += '-' + component
+    }
+    result += ':' + currentPath
+  }
+  return result
+}
+
+/**
+ * Return the project dependency for the given project path.
+ */
+def fromPath(path) {
+  return getTransformedProjectPath(path)
+}
+
+def getArchivesBaseName(name) {
+  if (name == 'lib') {
+    return 'material'
+  }
+  def pathComponents = name.tokenize('-')
+  def knownComponents = ['lib', 'java', 'com', 'google', 'android', 'material']
+  def firstUnknownComponent = knownComponents.size();
+  for (def i = 0; i < knownComponents.size() && i < pathComponents.size(); i++) {
+    if (pathComponents[i] != knownComponents[i]) {
+      firstUnknownComponent = i;
+      break;
+    }
+  }
+  def result = 'material'
+  for (def i = firstUnknownComponent; i < pathComponents.size(); i++) {
+    result = result + '-' + pathComponents[i];
+  }
+  return result;
+}
+
 subprojects {
-  version = rootProject.ext.supportVersion
-  // Set a different group for demos to resolve module name conflicts with other subprojects.
-  if (project.path.startsWith(':demos')) {
-    group = 'io.material.demo'
-  } else {
-    group = 'com.android.support'
+  tasks.withType(Test) {
+    maxParallelForks = Runtime.runtime.availableProcessors().intdiv(2) ?: 1
+    forkEvery = 80
+    maxHeapSize = "2048m"
+    minHeapSize = "1024m"
+  }
+}
+
+subprojects {
+  version = rootProject.ext.mdcLibraryVersion
+  group = 'com.google.android.material'
+
+  // Disable strict dependency resolution version constraints for test projects
+  if (project.name.contains("tests")) {
+    project.configurations.all {
+      dependencyConstraints.configureEach { dependencyConstraint ->
+        dependencyConstraint.version { versionConstraint ->
+          versionConstraint.strictly("")
+        }
+      }
+    }
   }
 
   project.plugins.whenPluginAdded { plugin ->
@@ -64,30 +118,54 @@ subprojects {
     }
 
     if (isAndroidLibrary || isAndroidApp || isAndroidTest) {
-      // Enforce NewApi lint check as fatal.
-      project.android.lintOptions.check 'NewApi'
-      project.android.lintOptions.fatal 'NewApi'
-      // Output lint errors on stdout
-      project.android.lintOptions.textReport true
-      project.android.lintOptions.textOutput 'stdout'
-      // Disable pre-dexing when gradle called with -PdisablePreDex;
-      project.android.dexOptions.preDexLibraries = rootProject.ext.preDexLibs
-
-      rootProject.lint.dependsOn project.lint
-
       project.android {
         compileSdkVersion rootProject.ext.compileSdkVersion
-        buildToolsVersion rootProject.ext.buildToolsVersion
 
         defaultConfig.minSdkVersion rootProject.ext.minSdkVersion
         defaultConfig.targetSdkVersion rootProject.ext.targetSdkVersion
+
         // This disables the builds tools automatic vector -> PNG generation
         defaultConfig.generatedDensities = []
 
-        compileOptions.sourceCompatibility JavaVersion.VERSION_1_7
-        compileOptions.targetCompatibility JavaVersion.VERSION_1_7
+        compileOptions.sourceCompatibility JavaVersion.VERSION_1_8
+        compileOptions.targetCompatibility JavaVersion.VERSION_1_8
 
         aaptOptions.additionalParameters "--no-version-vectors"
+
+        android {
+          lint {
+            checkOnly 'NewApi'
+          }
+        }
+
+        if (isAndroidLibrary) {
+          def JAVA_RESOURCES_TEMP_DIR = "$buildDir/javaResources"
+
+          task writeVersionFile() {
+            def versionFileDir = JAVA_RESOURCES_TEMP_DIR + '/META-INF'
+            def versionFileName = mdcLibraryPackage + '_' + getArchivesBaseName(project.name) + '.version'
+
+            new File(versionFileDir).mkdirs()
+            new File(versionFileDir + '/' + versionFileName).text = mdcLibraryVersion + "\n"
+          }
+
+          libraryVariants.all {
+            it.processJavaResourcesProvider.get().dependsOn(writeVersionFile)
+          }
+
+          project.android.sourceSets.main.resources.srcDir JAVA_RESOURCES_TEMP_DIR
+        }
+      }
+
+      if (isAndroidLibrary) {
+        project.afterEvaluate {
+          project.tasks.all({
+            if (it instanceof com.android.build.gradle.tasks.GenerateBuildConfig) {
+              // Disable generating BuildConfig.java
+              it.enabled = false
+            }
+          })
+        }
       }
     }
   }
